@@ -54,13 +54,14 @@
                     <td>{{ branch.dateUpdated | date('d M h:i a') }}</td>
 
                     <td>
-                        <a href="{{ siteUrl }}admin/rezi-api/map?branchName={{ branch.branchName | url_encode }}&sectionId={{ branch.sectionId }}&branchId={{ branch.id }}" style="font-size: 11px;" type="submit" class="btn">Edit Mapping</a>
+                        <a href="{{ siteUrl }}admin/rezi-api/map?branchName={{ branch.branchName | url_encode }}&sectionId={{ branch.sectionId }}&branchId={{ branch.id }}&uniqueIdField={{ branch.uniqueIdField }}" style="font-size: 11px;" type="submit" class="btn">Edit Mapping</a>
                     </td>
 
                     <td>
                         <form action="{{ siteUrl }}actions/rezi-api/default/update-branch">
                             {{ getCsrfInput() }}
                             <input type="hidden" name="branchId" value="{{ branch.id }}">
+                            <input type="hidden" name="uniqueIdField" value="{{ branch.uniqueIdField }}">
                             <input type="hidden" name="branchName" value="{{ branch.branchName }}">
                             <input type="hidden" name="sectionId" value="{{ branch.sectionId }}">
                             <button type="submit" class="btn submit">Update branch</button>

@@ -113,7 +113,8 @@ class Install extends Migration
                     'branchName' => $this->string(255)->notNull()->defaultValue(''),
                     'apiKey' => $this->string(1000)->notNull()->defaultValue(''),
                     'sectionId' => $this->integer(),
-                    'fieldMapping' => $this->text()
+                    'fieldMapping' => $this->text(),
+                    'uniqueIdField' => $this->string(255)->notNull()->defaultValue('')
                 ]
             );
         }

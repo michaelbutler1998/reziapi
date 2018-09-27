@@ -75,10 +75,11 @@ class ReziApiService extends Component
     {
         return json_decode( ReziApiRecord::find()->where(['id' => $branchId])->one()['fieldMapping'], true );
     }
-    public function updateBranchMapping($branchId, $mapping)
+    public function updateBranchMapping($branchId, $mapping, $uniqueIdField)
     {
         $branchModelRecord = $this->getBranch( $branchId );
         $branchModelRecord->setAttribute('fieldMapping', $mapping);
+        $branchModelRecord->setAttribute('uniqueIdField', $uniqueIdField);
         return $branchModelRecord->save();
     }
 
@@ -155,12 +156,23 @@ class ReziApiService extends Component
             'error' => $err
         );
     }
-    public function saveNewEntry( $sectionId, $fields)
+    public function saveEntry( $sectionId, $fields, $uniqueIdField, $roleId)
     {
         //$entryType = EntryType::find()->where(['handle' => $handle])->one();
     
-        $entry = new Entry();
-        $entry->sectionId = $sectionId;
+        
+
+        $entry = Entry::find()
+                ->sectionId($sectionId)
+                ->$uniqueIdField( $roleId )
+                ->status(null)
+                ->all();
+        if( count($entry) == 0 ){
+            $entry = new Entry();
+            $entry->sectionId = $sectionId;
+        }else{
+            $entry = $entry[0];
+        }
 
         // $entry->typeId = 1;
         $entry->authorId = 1;
@@ -188,7 +200,7 @@ class ReziApiService extends Component
             throw new \Exception("Couldn't save new entry " . print_r($entry->getErrors(), true));
         }
     }
-    public function updateCraftEntry($property, $mapping, $sectionId)
+    public function updateCraftEntry($property, $mapping, $sectionId, $uniqueIdField)
     {
         $mapping = (array) $mapping;
         $property = (array) $property;
@@ -208,37 +220,102 @@ class ReziApiService extends Component
             'title' => 'title yo 2',
             'typeId' => $entryTypeId
         );
+        $fields[$uniqueIdField] = $property['RoleId'];
+
+        // \Kint::dump( $property['Descriptions'], $this->has_string_keys( $property['Descriptions'] ) );
 
         foreach($mapping as $key => $map){
             //check whether we can easily find the maps value on the rezi feed
-            if( isset( $property[ $map ] ) ){
-                $fields[$key] = $property[ $map ];
-            }elseif( $this->findPropertyValueByMap($map, $property) != false ){
-                $fields[$key] = $this->findPropertyValueByMap($map, $property);
+
+            switch($map){
+                case 'Images':
+                    $imageIds = $this->getReziImages( $property['Images'] );
+                    break;
+                default:
+                    if( isset( $property[ $map ] ) ){
+                        $fields[$key] = $property[ $map ];
+                    }else{
+        
+                        $keys = explode('->', $map);
+                        
+                        $searchedValue = $this->searchReziMultiArray($keys, $property, 0);
+                        if($searchedValue){
+                            $fields[$key] = $searchedValue;
+                        }
+                    }
             }
         }
 
-        $this->saveNewEntry( $sectionId, $fields );
+        $this->saveEntry( $sectionId, $fields, $uniqueIdField, $property['RoleId'] );
         // \Kint::dump( $entryTypes );
     }
-    public function findPropertyValueByMap($map, $array){
-        $map = explode('->', $map);
-        $currentValue = $array;
 
-        if(count($map) > 1){
-            foreach($map as $key){
+    public function getReziImages($filesArray){
+        foreach($filesArray as $key => $node){
+            $file = $this->file_get_contents_curl($node['Url']);
+            $pathinfo = pathinfo($node['Url']);
+            
+            file_put_contents(__DIR__ . '/' . $pathinfo['basename'], $file);
 
-                if( gettype($key) == 'array' ){
-                    return false;
+        }
+    }
+
+    public function file_get_contents_curl($url) {
+        $ch = curl_init();
+    
+        curl_setopt($ch, CURLOPT_AUTOREFERER, TRUE);
+        curl_setopt($ch, CURLOPT_HEADER, 0);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);       
+    
+        $data = curl_exec($ch);
+        curl_close($ch);
+    
+        return $data;
+    }
+
+    public function searchReziMultiArray( $keys, $property, $index){
+        // i am respresenting multidemensional key like so Address->Postcode
+        // so i need to split them in order to traverse the multi dimensional rezi array
+        $currentKey = $keys[ $index ];
+        if( isset( $property[$currentKey] ) ){
+            if( gettype($property[$currentKey]) == 'array' ){
+
+                if( !$this->has_string_keys($property[$currentKey]) ){
+                    $mergedNode = [];
+                    foreach($property[$currentKey] as $node){
+                        $mergedNode = array_merge( $mergedNode, $node );
+                    }
+                    return $this->searchReziMultiArray( $keys, $mergedNode, $index+1 );
+                }else{
+                    return $this->searchReziMultiArray( $keys, $property[$currentKey], $index+1 );
                 }
-                elseif( isset( $currentValue[$key] ) ){
-                    $currentValue = $currentValue[$key];
-                }
+                
+            }else{
+                return $property[$currentKey];
             }
-            return gettype($currentValue) == 'array' ? false : $currentValue;
         }else{
             return false;
         }
+
+
+        // if( !isset($property[$key]) ){
+        //     return false;
+        // }else{
+        //     if( gettype($property[$key]) == 'array' ){
+        //         foreach( $property[$key] as $propNode ){
+        //             return $this->searchReziMultiArray( $key, $propNode );
+        //         }
+        //     }else{
+        //         return $property[$key];
+        //     }
+        // }
+
+
+    }
+    public function has_string_keys(array $array) {
+        return count(array_filter(array_keys($array), 'is_string')) > 0;
     }
 
 
@@ -256,8 +333,7 @@ class ReziApiService extends Component
 
 
 
-
-    public function taskTest( $branchId, $mapping, $sectionId ){
+    public function taskTest( $branchId, $mapping, $sectionId, $uniqueIdField ){
         $propIds = [];
         $props = [];
         $allPropsFound = false;
@@ -292,11 +368,10 @@ class ReziApiService extends Component
             $response = json_decode($propertyRequest['response'], true);
             if($propertyRequest['info']['http_code'] == 200){
                 $props [] = $response;
-                $updateCraftEntry = ReziApi::$plugin->reziApiService->updateCraftEntry($response, $mapping, $sectionId);
+                $updateCraftEntry = ReziApi::$plugin->reziApiService->updateCraftEntry($response, $mapping, $sectionId, $uniqueIdField);
             }else{
                 return false;
             }
-
             // $this->setProgress($queue, $key / count($propIds));
         }
     }

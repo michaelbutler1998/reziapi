@@ -17,6 +17,7 @@
 {% set sectionId = craft.request.getParam('sectionId', '') %}
 {% set branchId = craft.request.getParam('branchId', '') %}
 {% set section = craft.sections.getSectionById(sectionId) %}
+{% set uniqueIdField = craft.request.getParam('uniqueIdField', '') %}
 
 {% set crumbs = [
     { label: "Rezi Api"|t('app'), url: url('rezi-api') },
@@ -151,6 +152,24 @@
     <form method="get" action="{{ siteUrl }}actions/rezi-api/default/update-branch-mapping">
         <input name="branchId" type="hidden" value="{{ branchId }}">
         {{ getCsrfInput() }}
+        <div class="field">
+            <div style="margin: 40px 0" class="heading">
+                <label class="required">
+                Unique Id field
+                </label>
+                <div class="instructions">
+                    <p>This field is required to make sure properties dont get duplicated, must be a textfield</p>
+                </div>
+                <div class="select" style="margin-top: 20px">
+                    <select required data-selected-value="{{ uniqueIdField }}" name="uniqueIdField">
+                        <option selected disabled>Choose unique field</option>
+                        {% for field in fields %}
+                        <option value="{{ field.handle }}">{{ field.name }}</option>
+                        {% endfor %}
+                    <select>
+                </div>
+            </div>
+        </div>
         <table class="data fullwidth">
             <thead>
                 <th>Craft Field</th>

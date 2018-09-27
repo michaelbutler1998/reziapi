@@ -110,11 +110,12 @@ class DefaultController extends Controller
     {
         $branchId = Craft::$app->getRequest()->getRequiredParam('branchId');
         $mapping = Craft::$app->getRequest()->getRequiredParam('mapping');
+        $uniqueIdField = Craft::$app->getRequest()->getRequiredParam('uniqueIdField');
         // ReziApi::$plugin->reziApiService
 
         // \Kint::dump($mapping);
 
-        $updateBranchMapping = ReziApi::$plugin->reziApiService->updateBranchMapping($branchId, $mapping);
+        $updateBranchMapping = ReziApi::$plugin->reziApiService->updateBranchMapping($branchId, $mapping, $uniqueIdField);
         if($updateBranchMapping){
             Craft::$app->getSession()->setNotice(Craft::t('rezi-api', 'Mapping updated'));
         }else{
@@ -129,6 +130,7 @@ class DefaultController extends Controller
         $branchName = Craft::$app->getRequest()->getRequiredParam('branchName');
         $mapping = ReziApi::$plugin->reziApiService->getBranchMapping( $branchId );
         $sectionId = Craft::$app->getRequest()->getRequiredParam('sectionId');
+        $uniqueIdField = Craft::$app->getRequest()->getRequiredParam('uniqueIdField');
 
         $queue = Craft::$app->getQueue();
         
@@ -141,7 +143,7 @@ class DefaultController extends Controller
         //         'mapping' => $mapping
         //     ],
         // ]));
-        ReziApi::$plugin->reziApiService->taskTest( $branchId, $mapping, $sectionId   );
+        ReziApi::$plugin->reziApiService->taskTest( $branchId, $mapping, $sectionId, $uniqueIdField );
 
         Craft::$app->getSession()->setNotice(Craft::t('rezi-api', 'Starting update task'));
 
