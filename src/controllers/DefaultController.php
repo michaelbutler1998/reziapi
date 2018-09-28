@@ -135,15 +135,16 @@ class DefaultController extends Controller
         $queue = Craft::$app->getQueue();
         
 
-        // $jobId = $queue->push(new ReziApiTask([
-        //     'criteria' => [
-        //         'sectionId' => $sectionId,
-        //         'branchId' => $branchId,
-        //         'branchName' => $branchName,
-        //         'mapping' => $mapping
-        //     ],
-        // ]));
-        ReziApi::$plugin->reziApiService->taskTest( $branchId, $mapping, $sectionId, $uniqueIdField );
+        $jobId = $queue->push(new ReziApiTask([
+            'criteria' => [
+                'sectionId' => $sectionId,
+                'branchId' => $branchId,
+                'branchName' => $branchName,
+                'mapping' => $mapping,
+                'uniqueIdField' => $uniqueIdField
+            ],
+        ]));
+        // ReziApi::$plugin->reziApiService->taskTest( $branchId, $mapping, $sectionId, $uniqueIdField );
 
         Craft::$app->getSession()->setNotice(Craft::t('rezi-api', 'Starting update task'));
 

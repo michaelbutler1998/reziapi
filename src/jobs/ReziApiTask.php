@@ -78,6 +78,7 @@ class ReziApiTask extends BaseJob
         $branchId = $this->criteria['branchId'];
         $mapping = $this->criteria['mapping'];
         $sectionId = $this->criteria['sectionId'];
+        $uniqueIdField = $this->criteria['uniqueIdField'];
 
 
         while(!$allPropsFound){
@@ -99,23 +100,20 @@ class ReziApiTask extends BaseJob
                     $allPropsFound = true;
                 }
             }else{
-                file_put_contents(__DIR__ . '/code', $pageProps['info']['http_code']);
                 return false;
             }
             $pageNumber++;
         }
-        file_put_contents( __DIR__ . '/result.json' , json_encode($propIds) );
         
         foreach($propIds as $key => $id){
             $propertyRequest = ReziApi::$plugin->reziApiService->getFullDetails($id, $branchId);
             $response = json_decode($propertyRequest['response'], true);
             if($propertyRequest['info']['http_code'] == 200){
                 $props [] = $response;
-                $updateCraftEntry = ReziApi::$plugin->reziApiService->updateCraftEntry($response, $mapping, $sectionId);
+                $updateCraftEntry = ReziApi::$plugin->reziApiService->updateCraftEntry($response, $mapping, $sectionId, $uniqueIdField);
             }else{
                 return false;
             }
-
             $this->setProgress($queue, $key / count($propIds));
         }
         file_put_contents( __DIR__ . '/fullresult.json' , json_encode($props) );
