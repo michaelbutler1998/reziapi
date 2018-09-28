@@ -17,6 +17,9 @@ use craft\base\Component;
 //use lucajegard\reziapi\models\RezApiModel;
 use lucajegard\reziapi\records\ReziApiRecord;
 use craft\elements\Entry;
+use craft\elements\Asset;
+use craft\helpers\FileHelper;
+use craft\helpers\Json;
 
 use craft\web\twig\variables\Sections;
 
@@ -48,6 +51,7 @@ class ReziApiService extends Component
      *
      * @return mixed
      */
+    private $_folder;
     public function getBranch($branchId = null)
     {
         // if branch id is supplied then get that specific branch else just return all branches
@@ -229,7 +233,9 @@ class ReziApiService extends Component
 
             switch($map){
                 case 'Images':
+
                     $imageIds = $this->getReziImages( $property['Images'] );
+                    $fields[$key] = $imageIds;
                     break;
                 default:
                     if( isset( $property[ $map ] ) ){
@@ -251,13 +257,62 @@ class ReziApiService extends Component
     }
 
     public function getReziImages($filesArray){
+
+        $ids = [];
+
         foreach($filesArray as $key => $node){
-            $file = $this->file_get_contents_curl($node['Url']);
-            $pathinfo = pathinfo($node['Url']);
-            
-            file_put_contents(__DIR__ . '/' . $pathinfo['basename'], $file);
+            // first check if images is already downloaded by its title and if not thn download
+            $assets = Asset::Find()
+                ->title( $node['Id'] )
+                ->all();
+            if( count($assets) > 0 ){
+
+                array_push($ids, $assets[0]->id);
+            }else{
+
+                $file = $this->file_get_contents_curl($node['Url']);
+                $pathinfo = pathinfo($node['Url']);
+                
+                // file_put_contents(__DIR__ . '/' . $pathinfo['basename'], $file);
+                $path = Craft::$app->getPath()->getTempPath() . DIRECTORY_SEPARATOR . $pathinfo['basename'];
+                FileHelper::writeToFile($path, $file);
+
+                $asset = new Asset();
+                $asset->tempFilePath = $path;
+                $asset->setScenario(Asset::SCENARIO_CREATE);
+                $asset->filename = $pathinfo['basename'];
+                // $asset->title = $pathinfo['filename'];
+
+                $asset->avoidFilenameConflicts = true;
+                $asset->setScenario(\craft\elements\Asset::SCENARIO_CREATE);
+                $folder = $this->getFolder(1);
+
+                $asset->newFolderId = $folder->id;
+                $asset->volumeId = $folder->volumeId;
+
+                if(!$result = Craft::$app->getElements()->saveElement($asset)){
+                    Craft::error('[API CALLER] Could not store image ' . Json::encode($asset->getErrors()));
+                    //\Kint::dump($asset->getErrors());
+                }else{
+                    array_push($ids, $asset->id);
+                }
+
+                //$ids.push($asset->id);
+
+                
+            }
+
 
         }
+        return $ids;
+        
+    }
+
+    public function getFolder($id){
+        if($this->_folder === null){
+            $this->_folder = Craft::$app->getAssets()->findFolder(['id' => $id]);
+        }
+        return $this->_folder;
     }
 
     public function file_get_contents_curl($url) {
