@@ -109,7 +109,7 @@ class Install extends Migration
                     'dateUpdated' => $this->dateTime()->notNull(),
                     'uid' => $this->uid(),
                 // Custom columns in the table
-                    'siteId' => $this->integer()->notNull(),
+                    'siteId' => $this->integer(),
                     'branchName' => $this->string(255)->notNull()->defaultValue(''),
                     'apiKey' => $this->string(1000)->notNull()->defaultValue(''),
                     'sectionId' => $this->integer(),

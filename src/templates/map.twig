@@ -162,7 +162,7 @@
                 </div>
                 <div class="select" style="margin-top: 20px">
                     <select required data-selected-value="{{ uniqueIdField }}" name="uniqueIdField">
-                        <option selected disabled>Choose unique field</option>
+                        <option disabled>Choose unique field</option>
                         {% for field in fields %}
                         <option value="{{ field.handle }}">{{ field.name }}</option>
                         {% endfor %}

@@ -93,18 +93,18 @@
         <form method="get" action="{{ siteUrl }}actions/rezi-api/default/create-new-branch" class="flex">
             {{ getCsrfInput() }}
             <div class="input flex1">
-                <input autocomplete="off" type="text" name="branchName" placeholder="Branch Name" class="text fullwidth">
+                <input autocomplete="off" required type="text" name="branchName" placeholder="Branch Name" class="text fullwidth">
             </div>
             
             <div class="input flex1">
-                <input autocomplete="off" type="text" name="apiKey" placeholder="Rezi API key" class="text fullwidth">
+                <input autocomplete="off" required type="text" name="apiKey" placeholder="Rezi API key" class="text fullwidth">
             </div>
 
             <div class="input">
                 {% set sections = craft.sections.getAllSections() %}
                 <div class="select">
-                    <select name="sectionId">
-                        <option disabled selected>Select Section</option>
+                    <select required name="sectionId">
+                        <option disabled>Select Section</option>
                         {% for section in sections if section.type == "channel" %}
                         <option value="{{ section.id }}">{{ section.handle }}</option>
                         {% endfor %}
