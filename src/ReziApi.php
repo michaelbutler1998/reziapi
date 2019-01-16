@@ -93,6 +93,10 @@ class ReziApi extends Plugin
 
         // ReziApi::$plugin->reziApiService->updateCraftEntry(1,1,2);
 
+        // ReziApi::$plugin->reziApiService->catTest();
+
+
+
         // Register variable
         Event::on(CraftVariable::class, CraftVariable::EVENT_INIT, function(Event $event) {
             /** @var CraftVariable $variable */
