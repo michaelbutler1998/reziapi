@@ -15,6 +15,7 @@ use lucajegard\reziapi\ReziApi;
 use Craft;
 use craft\web\Controller;
 use lucajegard\reziapi\jobs\ReziApiTask;
+use craft\elements\Entry;
 
 /**
  * Default Controller
@@ -134,6 +135,17 @@ class DefaultController extends Controller
 
         $queue = Craft::$app->getQueue();
         
+        $allProps = Entry::find()
+        ->sectionId($sectionId)
+        ->status(null)
+        ->all();
+
+        // d($allProps[0]->status);
+        foreach($allProps as $prop){
+            // $prop->status = 'disabled';
+            $prop->enabled = false;
+            Craft::$app->elements->saveElement($prop);
+        }
 
         $jobId = $queue->push(new ReziApiTask([
             'criteria' => [

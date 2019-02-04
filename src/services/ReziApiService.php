@@ -198,7 +198,8 @@ class ReziApiService extends Component
         }
     
         $entry->setFieldValues($fields);
-    
+        $entry->enabled = true;
+
         if (Craft::$app->elements->saveElement($entry)) {
             return $entry;
         } else {
@@ -222,8 +223,10 @@ class ReziApiService extends Component
         ->all();
 
         $newcat = new Category();
-        $newcat->groupId = $categoryGroupId;
+        $newcat->groupId = 2;
         $newcat->title = 'fgdd';
+
+        d($newcat);
 
         // Craft::$app->elements->saveElement($newcat);
 
@@ -232,12 +235,14 @@ class ReziApiService extends Component
         $sections = new Sections();
         $section = $sections->getSectionById(1);
         $entryTypes = $section->getEntryTypes();
+
+
         $entryTypeId = $entryTypes[0]->id;
 
         $fields = $entryTypes[0]->getFieldLayout()->getFields();
-        d($fields);
+        d($entryTypes);
     }
-    public function updateCraftCategories($catTitle, $groupId)
+    public function updateCraftCategories($catTitle, int $groupId)
     {
         $category = Category::find()
         ->groupId($groupId)
@@ -254,8 +259,25 @@ class ReziApiService extends Component
             return $category->id;
         }
     }
+    /**
+     * @ TODO
+     */
+    public function prepareCategory($entryFields, $key, $fieldName)
+    {
+        $catGroupId = null;
+        foreach ($entryFields as $entryField) {
+            if ($entryField->handle == $key) {
+                // $catGroupId = $entryField->groupId;
+                $splitSource = explode(':', $entryField->source);
+                if (count($splitSource) == 2) {
+                    $catGroupId = $splitSource[1];
+                }
+            }
+        }
+        file_put_contents(__DIR__ . '/field.json', json_encode($catGroupId));
 
-
+        return $catGroupId === null ? [] : [ $this->updateCraftCategories($fieldName, $catGroupId) ];
+    }
     public function updateCraftEntry($property, $mapping, $sectionId, $uniqueIdField)
     {
         $mapping = (array) $mapping;
@@ -267,37 +289,28 @@ class ReziApiService extends Component
         $sections = new Sections();
         $section = $sections->getSectionById($sectionId);
         $entryTypes = $section->getEntryTypes();
+        $entryFields = [];
         $entryTypeId = $entryTypes[0]->id;
-
-        $entryFields = $entryTypes[0]->getFieldLayout()->getFields();
-        
-        // \Kint::dump( $field );
-
         $fields = array(
-            'title' => 'title yo 2',
-            'typeId' => $entryTypeId
+            'typeId' => $entryTypeId,
         );
+
+        foreach ($entryTypes as $entryType) {
+            $entryFields = array_merge($entryFields, $entryType->getFieldLayout()->getFields());
+        }
+        
         $fields[$uniqueIdField] = $property['RoleId'];
-
-        // \Kint::dump( $property['Descriptions'], $this->has_string_keys( $property['Descriptions'] ) );
-
         foreach ($mapping as $key => $map) {
             //check whether we can easily find the maps value on the rezi feed
 
             switch ($map) {
+                case 'RoleType (category)':
+                    $fields[$key] = $this->prepareCategory($entryFields, $key, $property['RoleType']['DisplayName']);
+                    break;
                 case 'Locality (category)':
-                    $catGroupId = null;
-                    foreach ($entryFields as $entryField) {
-                        if ($entryField->handle == $key) {
-                            $catGroupId = $entryField->groupId;
-                        }
-                    }
-                    if ($catGroupId !== null) {
-                        $fields[$key] = [ $this->updateCraftCategories($property['Address']['Locality'], $catGroupId) ];
-                    }
+                    $fields[$key] = $this->prepareCategory($entryFields, $key, $property['Address']['Locality']);
                     break;
                 case 'Images':
-
                     $imageIds = $this->getReziImages($property['Images']);
                     $fields[$key] = $imageIds;
                     break;
@@ -334,7 +347,7 @@ class ReziApiService extends Component
                 $file = $this->file_get_contents_curl($node['Url']);
                 $pathinfo = pathinfo($node['Url']);
                 
-                // file_put_contents(__DIR__ . '/' . $pathinfo['basename'], $file);
+                file_put_contents(__DIR__ . '/fileinfo.txt', $pathinfo);
                 $path = Craft::$app->getPath()->getTempPath() . DIRECTORY_SEPARATOR . $pathinfo['basename'];
                 FileHelper::writeToFile($path, $file);
 
