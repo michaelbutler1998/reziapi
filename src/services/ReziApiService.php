@@ -56,6 +56,7 @@ class ReziApiService extends Component
     public function getBranch($branchId = null)
     {
         // if branch id is supplied then get that specific branch else just return all branches
+        // Branches being branches of the company (sub companies)
         if (is_null($branchId)) {
             return ReziApiRecord::find()->all();
         } else {
@@ -96,8 +97,13 @@ class ReziApiService extends Component
     {
         $key = $this->getBranchApiKey($branchId);
         
+        // A command line tool and library for transferring data with URL syntax,
+        // https://github.com/curl/curl
         $curl = curl_init();
 
+        // http://php.net/manual/en/function.curl-setopt.php --> Search for the setting to see what it does
+        // curl makes a http request using the propertyID & Key (branch) and rezi returns a json file? 
+        
         curl_setopt_array($curl, array(
         CURLOPT_URL => "https://api.dezrez.com/api/simplepropertyrole/" . $propertyId . "?APIKEY=" . $key,
         CURLOPT_RETURNTRANSFER => true,
@@ -106,6 +112,8 @@ class ReziApiService extends Component
         CURLOPT_TIMEOUT => 30,
         CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
         CURLOPT_CUSTOMREQUEST => "GET",
+        //Requesting (not forcing) the server to return Json as it usually returns either json or XML. 
+        //For Rezi, this is not required as it only responds with Json regardless, but is good practice.
         CURLOPT_HTTPHEADER => array(
             "Cache-Control: no-cache",
             "Content-Type: application/json",
@@ -113,13 +121,11 @@ class ReziApiService extends Component
             "Rezi-Api-Version: 1.0"
         ),
         ));
-
+        
         $response = curl_exec($curl);
         $err = curl_error($curl);
         $info = curl_getinfo($curl);
-
         curl_close($curl);
-
         return array(
             'response' => $response,
             'info' => $info,
@@ -166,12 +172,13 @@ class ReziApiService extends Component
         //$entryType = EntryType::find()->where(['handle' => $handle])->one();
     
         
-
         $entry = Entry::find()
                 ->sectionId($sectionId)
                 ->$uniqueIdField($roleId)
                 ->status(null)
                 ->all();
+        // If no entries match the requirements (in correct section with unique ID)
+        // Create one, else update the first entry matching this
         if (count($entry) == 0) {
             $entry = new Entry();
             $entry->sectionId = $sectionId;
@@ -182,6 +189,9 @@ class ReziApiService extends Component
         // $entry->typeId = 1;
         $entry->authorId = 1;
     
+        
+        // To update entry, if $fields has a matching field then set it as the entries, following this unset the field
+        
         if (isset($fields['typeId'])) {
             $entry->typeId = $fields['typeId'];
             unset($fields['typeId']);
