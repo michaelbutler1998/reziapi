@@ -139,7 +139,7 @@ class ReziApiService extends Component
         CURLOPT_TIMEOUT => 30,
         CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
         CURLOPT_CUSTOMREQUEST => "POST",
-        CURLOPT_POSTFIELDS => "{\n  MinimumPrice: 0,\n  MinimumBedrooms:0,\n  MaximumBedrooms:10,\n  BranchIdList:[],\n  PageNumber: ".$pageNumber.",\n PageSize: 20,\n MarketingFlags: ['ApprovedForMarketingWebsite'] }",
+        CURLOPT_POSTFIELDS => "{\n  MinimumPrice: 0,\n  MinimumBedrooms:0,\n  BranchIdList:[],\n  PageNumber: ".$pageNumber.",\n PageSize: 20,\n MarketingFlags: ['ApprovedForMarketingWebsite'] }",
         CURLOPT_HTTPHEADER => array(
             "Cache-Control: no-cache",
             "Content-Type: application/json",
@@ -253,10 +253,10 @@ class ReziApiService extends Component
             $newCategory->groupId = $groupId;
             $newCategory->title = $catTitle;
             if (Craft::$app->elements->saveElement($newCategory)) {
-                return $newCategory->id;
+                return (int)$newCategory->id;
             }
         } else {
-            return $category->id;
+            return (int)$category->id;
         }
     }
     /**
@@ -310,6 +310,25 @@ class ReziApiService extends Component
                 case 'Locality (category)':
                     $fields[$key] = $this->prepareCategory($entryFields, $key, $property['Address']['Locality']);
                     break;
+                case 'Flags (category)':
+                    $flatCatIds = [];
+                    foreach ($property['Flags'] as $flag) {
+                        $flatCatIds = array_merge($flatCatIds, $this->prepareCategory($entryFields, $key, $flag['DisplayName']));
+                    }
+                    file_put_contents(__DIR__ . '/flag.json', json_encode($flatCatIds));
+                    $fields[$key] = $flatCatIds;
+                    break;
+                case 'Descriptions->Features (Category)':
+                    $featureCatIds = [];
+                    foreach ($property['Descriptions'] as $desc) {
+                        if ($desc['Name'] == 'Feature Description') {
+                            foreach ($desc['Features'] as $feature) {
+                                $featureCatIds = array_merge($featureCatIds, $this->prepareCategory($entryFields, $key, $feature['Feature']));
+                            }
+                        }
+                    }
+                    $fields[$key] = $featureCatIds;
+                    break;
                 case 'Documents':
                     $imageIds = $this->getReziDocuments($property['Documents']);
                     $fields[$key] = $imageIds;
@@ -317,6 +336,13 @@ class ReziApiService extends Component
                 case 'Images':
                     $imageIds = $this->getReziImages($property['Images']);
                     $fields[$key] = $imageIds;
+                    break;
+                case 'Text (Main Marketing)':
+                    foreach ($property['Descriptions'] as $desc) {
+                        if ($desc['Name'] == 'Main Marketing') {
+                            $fields[$key] = $desc['Text'];
+                        }
+                    }
                     break;
                 default:
                     if (isset($property[ $map ])) {
