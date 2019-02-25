@@ -103,6 +103,7 @@
             <div class="input">
                 {% set sections = craft.sections.getAllSections() %}
                 <div class="select">
+                    {# Outputs the option to add properties to any channel #}
                     <select required name="sectionId">
                         <option disabled>Select Section</option>
                         {% for section in sections if section.type == "channel" %}
@@ -132,6 +133,7 @@
             display: flex;
         }
     </style>
+{# Unsure what this is attempting to perform #}
 {% set myJs %}
 $('.update-link').click(function(){
     var form = $(this).parent().prev().find('form');
