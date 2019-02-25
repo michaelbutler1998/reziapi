@@ -24,6 +24,7 @@
     { label: "Edit mapping"|t('app'), url: url('rezi-api/map?branchName=' ~ branchName ~ '&sectionId=' ~ sectionId ~ '&branchId=' ~ branchId ) }
 ] %}
 
+{# Large form containing all appropriate option values for the Rezi API to import #}
 {% macro select(value, branchId) %}
 <div class="select">
     <select data-selected-value="{{ craft.reziApi.getMapping(branchId)[value] is defined ? craft.reziApi.getMapping(branchId)[value] : '' }}" name="mapping[{{ value }}]">
@@ -151,11 +152,12 @@
 
 {% set content %}
 
-
+{# Edit mapping section of the Rezi API panel #}
 <div class="pane">
     <h2>Field mapping for {{ branchName }}</h2>
     {% set fields = craft.sections.getSectionById(sectionId).getEntryTypes()[0].getFieldLayout().getFields() %}
     {% set types = craft.sections.getSectionById(sectionId).getEntryTypes() %}
+    {# sectionID passed as parameter at top of this template #}
     <form method="get" action="{{ siteUrl }}actions/rezi-api/default/update-branch-mapping">
         <input name="branchId" type="hidden" value="{{ branchId }}">
         {{ getCsrfInput() }}
@@ -214,6 +216,7 @@
         <a href="" class="go show-example">Show example feed</a>
     </p>
     <pre class="json" style="display: none">
+{# Displaying example feed upon click (click jquery below) #}
 {
     &#x22;RoleId&#x22;: 14105,
     &#x22;PropertyId&#x22;: 1702,
