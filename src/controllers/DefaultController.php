@@ -82,6 +82,7 @@ class DefaultController extends Controller
     public function actionDeleteBranch()
     {
         $branchId = Craft::$app->getRequest()->getRequiredParam('branchId');
+        // this is an if exists referencing the services file
         if( ReziApi::$plugin->reziApiService->deleteBranchModel($branchId) ){
             Craft::$app->getSession()->setNotice(Craft::t('rezi-api', 'Branch deleted'));
         }else{
