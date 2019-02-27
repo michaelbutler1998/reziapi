@@ -268,13 +268,14 @@ class ReziApiService extends Component
         foreach ($entryFields as $entryField) {
             if ($entryField->handle == $key) {
                 // $catGroupId = $entryField->groupId;
-                $splitSource = explode(':', $entryField->source);
-                if (count($splitSource) == 2) {
-                    $catGroupId = $splitSource[1];
-                }
+                //$splitSource = explode(':', $entryField->source);
+                //if (count($splitSource) == 2) {
+                //    $catGroupId = $splitSource[1];
+                //}
+                $catGroupId = (Craft::$app->categories->getGroupByHandle($entryField->handle)->id);
             }
         }
-        file_put_contents(__DIR__ . '/field.json', json_encode($catGroupId));
+        //file_put_contents(__DIR__ . '/field.json', json_encode($catGroupId));
 
         return $catGroupId === null ? [] : [ $this->updateCraftCategories($fieldName, $catGroupId) ];
     }
