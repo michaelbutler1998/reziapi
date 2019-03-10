@@ -310,6 +310,9 @@ class ReziApiService extends Component
                 case 'Locality (category)':
                     $fields[$key] = $this->prepareCategory($entryFields, $key, $property['Address']['Locality']);
                     break;
+                case 'PropertyType (Category)':
+                    $fields[$key] = $this->prepareCategory($entryFields, $key, $property['PropertyType']['DisplayName']);
+                    break;
                 case 'Flags (category)':
                     $flatCatIds = [];
                     foreach ($property['Flags'] as $flag) {
