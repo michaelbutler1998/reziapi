@@ -118,6 +118,7 @@ class ReziApiService extends Component
         $err = curl_error($curl);
         $info = curl_getinfo($curl);
 
+        file_put_contents(__DIR__.'/info.json',json_encode($info));
         curl_close($curl);
 
         return array(
