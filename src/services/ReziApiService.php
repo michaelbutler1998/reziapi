@@ -365,12 +365,21 @@ class ReziApiService extends Component
         $this->saveEntry($sectionId, $fields, $uniqueIdField, $property['RoleId']);
         // \Kint::dump( $entryTypes );
     }
+    public function reziLog($message)
+    {
+
+        $file = Craft::getAlias('@storage/logs/rezi.log');
+        $log = date('Y-m-d H:i:s').' '.$message."\n";
+        FileHelper::writeToFile($file, $log, ['append' => true]);
+    }
 
     public function getReziImages($filesArray)
     {
         $ids = [];
-
+        $mimes = [];
+        $fileInfo = [];
         foreach ($filesArray as $key => $node) {
+            $fileInfo[] = $node;
             // first check if images is already downloaded by its title and if not thn download
             $assets = Asset::Find()
                 ->title($node['Id'])
@@ -380,19 +389,33 @@ class ReziApiService extends Component
             } else {
                 $file = $this->file_get_contents_curl($node['Url']);
                 $pathinfo = pathinfo($node['Url']);
-                
-                file_put_contents(__DIR__ . '/fileinfo.txt', $pathinfo);
-                $path = Craft::$app->getPath()->getTempPath() . DIRECTORY_SEPARATOR . $pathinfo['basename'];
+                $fileInfo[] = $pathinfo;
+                $basename = $pathinfo['basename'];
+                if(strpos($basename, '?v=') !== false){
+                    $basename = explode( '?v=', $basename )[0];
+                }
+
+                file_put_contents(__DIR__ . '/fileinfo.json', json_encode($fileInfo));
+
+                $path = Craft::$app->getPath()->getTempPath() . DIRECTORY_SEPARATOR . $basename;
+                if(strpos($path, '?v=') !== false){
+                    $path = explode( '?v=', $path )[0];
+                }
+
                 FileHelper::writeToFile($path, $file);
+                $this->reziLog('adding filepath: ' . $path);
 
                 $mimeType = FileHelper::getMimeType($path, null, false);
-
-                if ($mimeType !== null && strpos($mimeType, 'image/') !== 0 && strpos($mimeType, 'application/pdf') !== 0) {
+                $mimes [] = $mimeType;
+                $this->reziLog( $mimeType );
+                file_put_contents(__DIR__ . '/mimeinfo.json', json_encode($mimes));
+                if ($mimeType !== null && strpos($mimeType, 'image/') !== 0) {
                 } else {
                     $asset = new Asset();
                     $asset->tempFilePath = $path;
                     $asset->setScenario(Asset::SCENARIO_CREATE);
-                    $asset->filename = $pathinfo['basename'];
+                    $asset->filename = $basename;
+
                     // $asset->title = $pathinfo['filename'];
 
                     $asset->avoidFilenameConflicts = true;
@@ -404,10 +427,12 @@ class ReziApiService extends Component
 
                     
 
-                    if (!$result = Craft::$app->getElements()->saveElement($asset)) {
+                    if (!Craft::$app->getElements()->saveElement($asset)) {
                         Craft::error('[API CALLER] Could not store image ' . Json::encode($asset->getErrors()));
-                    //\Kint::dump($asset->getErrors());
+                        $this->reziLog('Error saving new craft image: ' . Json::encode($asset->getErrors()));
+                        //\Kint::dump($asset->getErrors());
                     } else {
+                        $this->reziLog('New image: ' . $asset->title . ' saved successfully with path: ' . $basename);
                         array_push($ids, $asset->id);
                     }
                 }
