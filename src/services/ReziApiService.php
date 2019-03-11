@@ -118,7 +118,7 @@ class ReziApiService extends Component
         $err = curl_error($curl);
         $info = curl_getinfo($curl);
 
-        file_put_contents(__DIR__.'/info.json',json_encode($info));
+        file_put_contents(__DIR__.'/info.json', json_encode($info));
         curl_close($curl);
 
         return array(
@@ -265,16 +265,22 @@ class ReziApiService extends Component
      */
     public function prepareCategory($entryFields, $key, $fieldName)
     {
+        if (empty(trim($fieldName))) {
+            return [];
+        }
+        $this->reziLog('Creating Category: ' . $fieldName);
         $catGroupId = null;
         foreach ($entryFields as $entryField) {
             if ($entryField->handle == $key) {
                 // $catGroupId = $entryField->groupId;
-                $splitSource = explode(':', $entryField->source);
-                if (count($splitSource) == 2) {
-                    $catGroupId = $splitSource[1];
-                }
+                // $splitSource = explode(':', $entryField->source);
+                // if (count($splitSource) == 2) {
+                //     $catGroupId = $splitSource[1];
+                // }
+                $catGroupId = (Craft::$app->categories->getGroupByHandle($entryField->handle)->id);
             }
         }
+        
         file_put_contents(__DIR__ . '/field.json', json_encode($catGroupId));
 
         return $catGroupId === null ? [] : [ $this->updateCraftCategories($fieldName, $catGroupId) ];
@@ -324,7 +330,7 @@ class ReziApiService extends Component
                     break;
                 case 'Descriptions->Features (Category)':
                     $featureCatIds = [];
-                    if ($desc['Name'] == 'Feature Description' || $desc['Name'] == 'Features') {                    
+                    if ($desc['Name'] == 'Feature Description' || $desc['Name'] == 'Features') {
                         if ($desc['Name'] == 'Feature Description') {
                             foreach ($desc['Features'] as $feature) {
                                 $featureCatIds = array_merge($featureCatIds, $this->prepareCategory($entryFields, $key, $feature['Feature']));
@@ -367,7 +373,6 @@ class ReziApiService extends Component
     }
     public function reziLog($message)
     {
-
         $file = Craft::getAlias('@storage/logs/rezi.log');
         $log = date('Y-m-d H:i:s').' '.$message."\n";
         FileHelper::writeToFile($file, $log, ['append' => true]);
@@ -391,15 +396,15 @@ class ReziApiService extends Component
                 $pathinfo = pathinfo($node['Url']);
                 $fileInfo[] = $pathinfo;
                 $basename = $pathinfo['basename'];
-                if(strpos($basename, '?v=') !== false){
-                    $basename = explode( '?v=', $basename )[0];
+                if (strpos($basename, '?v=') !== false) {
+                    $basename = explode('?v=', $basename)[0];
                 }
 
                 file_put_contents(__DIR__ . '/fileinfo.json', json_encode($fileInfo));
 
                 $path = Craft::$app->getPath()->getTempPath() . DIRECTORY_SEPARATOR . $basename;
-                if(strpos($path, '?v=') !== false){
-                    $path = explode( '?v=', $path )[0];
+                if (strpos($path, '?v=') !== false) {
+                    $path = explode('?v=', $path)[0];
                 }
 
                 FileHelper::writeToFile($path, $file);
@@ -407,7 +412,7 @@ class ReziApiService extends Component
 
                 $mimeType = FileHelper::getMimeType($path, null, false);
                 $mimes [] = $mimeType;
-                $this->reziLog( $mimeType );
+                $this->reziLog($mimeType);
                 file_put_contents(__DIR__ . '/mimeinfo.json', json_encode($mimes));
                 if ($mimeType !== null && strpos($mimeType, 'image/') !== 0) {
                 } else {
@@ -430,7 +435,7 @@ class ReziApiService extends Component
                     if (!Craft::$app->getElements()->saveElement($asset)) {
                         Craft::error('[API CALLER] Could not store image ' . Json::encode($asset->getErrors()));
                         $this->reziLog('Error saving new craft image: ' . Json::encode($asset->getErrors()));
-                        //\Kint::dump($asset->getErrors());
+                    //\Kint::dump($asset->getErrors());
                     } else {
                         $this->reziLog('New image: ' . $asset->title . ' saved successfully with path: ' . $basename);
                         array_push($ids, $asset->id);
