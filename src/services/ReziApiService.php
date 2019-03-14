@@ -399,6 +399,9 @@ class ReziApiService extends Component
                 if (strpos($basename, '?v=') !== false) {
                     $basename = explode('?v=', $basename)[0];
                 }
+                //filesize attempt images
+                $filesize = filesize($node['Url']);
+                file_put_contents(__DIR__ . '/filesize.txt', ($filesize));
 
                 file_put_contents(__DIR__ . '/fileinfo.json', json_encode($fileInfo));
 
@@ -462,19 +465,28 @@ class ReziApiService extends Component
             } else {
                 $file = $this->file_get_contents_curl($node['Url']);
                 $pathinfo = pathinfo($node['Url']);
-                
-                file_put_contents(__DIR__ . '/fileinfo.txt', $pathinfo);
+                $fileInfo[] = $pathinfo;
+                $basename = $pathinfo['basename'];
+                if (strpos($basename, '?v=') !== false) {
+                    $basename = explode('?v=', $basename)[0];
+                }
+
+
+                file_put_contents(__DIR__ . '/brochureDocumentInfo.json', json_encode($fileInfo));
+
+                file_put_contents(__DIR__ . '/brochureDocumentInfo.txt', $pathinfo);
                 $path = Craft::$app->getPath()->getTempPath() . DIRECTORY_SEPARATOR . $pathinfo['basename'];
                 FileHelper::writeToFile($path, $file);
 
                 $mimeType = FileHelper::getMimeType($path, null, false);
 
-                if ($mimeType !== null && strpos($mimeType, 'image/') !== 0 && strpos($mimeType, 'application/pdf') !== 0) {
+                //if ($mimeType !== null && strpos($mimeType, 'image/') !== 0 && strpos($mimeType, 'application/pdf') !== 0) {
+                if ($mimeType !== null && strpos($mimeType, 'application/pdf') !== 0) {
                 } else {
                     $asset = new Asset();
                     $asset->tempFilePath = $path;
                     $asset->setScenario(Asset::SCENARIO_CREATE);
-                    $asset->filename = $pathinfo['basename'];
+                    $asset->filename = $basename;
                     // $asset->title = $pathinfo['filename'];
 
                     $asset->avoidFilenameConflicts = true;
