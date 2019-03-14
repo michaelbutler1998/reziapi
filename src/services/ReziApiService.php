@@ -330,13 +330,24 @@ class ReziApiService extends Component
                     break;
                 case 'Descriptions->Features (Category)':
                     $featureCatIds = [];
-                    if ($desc['Name'] == 'Feature Description' || $desc['Name'] == 'Features') {
-                        if ($desc['Name'] == 'Feature Description') {
+                    $features = [];
+                    //if ($desc['Name'] == 'Feature Description' || $desc['Name'] == 'Features') {  
+                    foreach ($property['Descriptions'] as $desc) {
+                        if ($desc['Name'] == 'Features' || $desc['Name'] == 'Feature Description') {
                             foreach ($desc['Features'] as $feature) {
                                 $featureCatIds = array_merge($featureCatIds, $this->prepareCategory($entryFields, $key, $feature['Feature']));
+                                array_push($features, $feature['Feature']);
                             }
                         }
+                        // if ($desc['Name'] == 'Feature Description') {
+                        //     foreach ($desc['Features'] as $feature) {
+                        //         $featureCatIds = array_merge($featureCatIds, $this->prepareCategory($entryFields, $key, $feature['Feature']));
+                        //         array_push($features, $feature['Feature']);
+                        //     }
+                        // }
                     }
+                    //}
+                    file_put_contents(__DIR__ . '/features.json', json_encode($features));
                     $fields[$key] = $featureCatIds;
                     break;
                 case 'Documents':
