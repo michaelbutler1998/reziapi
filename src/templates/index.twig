@@ -134,8 +134,9 @@
     </style>
 {% set myJs %}
 $('.update-link').click(function(){
-    var form = $(this).parent().prev().find('form');
-    var params = form.serialize();
+    var form = $(this).parent().next().find('form');
+    var serial = $('input[name!=CRAFT_CSRF_TOKEN]', form).serialize();
+    var params = serial;
     var link = form.attr('action');
     var fullLink = link + '?' + params;
 
