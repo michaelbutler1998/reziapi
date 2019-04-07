@@ -357,6 +357,33 @@ class ReziApiService extends Component
                         }
                     }
                     break;
+                case 'Pets':
+                    //$petsWelcome = 'working-';
+                    foreach ($property['Descriptions'] as $desc) {
+
+                        //file_put_contents(__DIR__ . '/fileinfo.json', json_encode($fileInfo));
+                        if (isset($desc['Pairs'])){ 
+                            foreach ($desc['Pairs'] as $pairs) {
+                                if($pairs['Key']['SystemName'] == 'Pets'){
+                                    $fields[$key] = $pairs['Value']['SystemName'];  
+                                    // if ($pairs['Value']['SystemName'] == 'Yes' || $pairs['Value']['SystemName'] == 'Yes'){
+                                    //     $fields[$key] = 1;
+                                    // } else {
+                                    //     $fields[$key] = 0;
+                                    // }
+                                    //$petsWelcome .= $pairs['Value']['SystemName'];
+                                    //$petsWelcome .='==';
+
+                                    //file_put_contents(__DIR__ . '/test.json', $pairs['Value']['SystemName']);
+                                } 
+                            }
+                            
+                        }
+                      
+                        
+                    }
+                    //file_put_contents(__DIR__ . '/test.text', $petsWelcome);
+                    break;
                 default:
                     if (isset($property[ $map ])) {
                         $fields[$key] = $property[ $map ];
