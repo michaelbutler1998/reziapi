@@ -208,41 +208,6 @@ class ReziApiService extends Component
         }
     }
 
-    public function catTest()
-    {
-        $entry = Entry::find()
-        ->sectionId(1)
-        ->status(null)
-        ->first();
-
-        $categoryGroupId = $entry['parish']->groupId;
-
-
-        $category = Category::find()
-        ->groupId($categoryGroupId)
-        ->limit(null)
-        ->all();
-
-        $newcat = new Category();
-        $newcat->groupId = 2;
-        $newcat->title = 'fgdd';
-
-        d($newcat);
-
-        // Craft::$app->elements->saveElement($newcat);
-
-        // d( Craft::$app->categories->saveCat );
-
-        $sections = new Sections();
-        $section = $sections->getSectionById(1);
-        $entryTypes = $section->getEntryTypes();
-
-
-        $entryTypeId = $entryTypes[0]->id;
-
-        $fields = $entryTypes[0]->getFieldLayout()->getFields();
-        d($entryTypes);
-    }
     public function updateCraftCategories($catTitle, int $groupId)
     {
         $category = Category::find()
@@ -323,7 +288,6 @@ class ReziApiService extends Component
                 case 'Descriptions->Features (Category)':
                     $featureCatIds = [];
                     $features = [];
-                    //if ($desc['Name'] == 'Feature Description' || $desc['Name'] == 'Features') {  
                     foreach ($property['Descriptions'] as $desc) {
                         if ($desc['Name'] == 'Features' || $desc['Name'] == 'Feature Description') {
                             foreach ($desc['Features'] as $feature) {
@@ -331,14 +295,7 @@ class ReziApiService extends Component
                                 array_push($features, $feature['Feature']);
                             }
                         }
-                        // if ($desc['Name'] == 'Feature Description') {
-                        //     foreach ($desc['Features'] as $feature) {
-                        //         $featureCatIds = array_merge($featureCatIds, $this->prepareCategory($entryFields, $key, $feature['Feature']));
-                        //         array_push($features, $feature['Feature']);
-                        //     }
-                        // }
                     }
-                    //}
                     file_put_contents(__DIR__ . '/features.json', json_encode($features));
                     $fields[$key] = $featureCatIds;
                     break;
@@ -358,31 +315,15 @@ class ReziApiService extends Component
                     }
                     break;
                 case 'Pets':
-                    //$petsWelcome = 'working-';
                     foreach ($property['Descriptions'] as $desc) {
-
-                        //file_put_contents(__DIR__ . '/fileinfo.json', json_encode($fileInfo));
-                        if (isset($desc['Pairs'])){ 
+                        if (isset($desc['Pairs'])) {
                             foreach ($desc['Pairs'] as $pairs) {
-                                if($pairs['Key']['SystemName'] == 'Pets'){
-                                    $fields[$key] = $pairs['Value']['SystemName'];  
-                                    // if ($pairs['Value']['SystemName'] == 'Yes' || $pairs['Value']['SystemName'] == 'Yes'){
-                                    //     $fields[$key] = 1;
-                                    // } else {
-                                    //     $fields[$key] = 0;
-                                    // }
-                                    //$petsWelcome .= $pairs['Value']['SystemName'];
-                                    //$petsWelcome .='==';
-
-                                    //file_put_contents(__DIR__ . '/test.json', $pairs['Value']['SystemName']);
-                                } 
+                                if ($pairs['Key']['SystemName'] == 'Pets') {
+                                    $fields[$key] = $pairs['Value']['SystemName'];
+                                }
                             }
-                            
                         }
-                      
-                        
                     }
-                    //file_put_contents(__DIR__ . '/test.text', $petsWelcome);
                     break;
                 default:
                     if (isset($property[ $map ])) {
@@ -399,7 +340,6 @@ class ReziApiService extends Component
         }
 
         $this->saveEntry($sectionId, $fields, $uniqueIdField, $property['RoleId']);
-        // \Kint::dump( $entryTypes );
     }
     public function reziLog($message)
     {
@@ -588,19 +528,6 @@ class ReziApiService extends Component
         } else {
             return false;
         }
-
-
-        // if( !isset($property[$key]) ){
-        //     return false;
-        // }else{
-        //     if( gettype($property[$key]) == 'array' ){
-        //         foreach( $property[$key] as $propNode ){
-        //             return $this->searchReziMultiArray( $key, $propNode );
-        //         }
-        //     }else{
-        //         return $property[$key];
-        //     }
-        // }
     }
     public function has_string_keys(array $array)
     {

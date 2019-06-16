@@ -14,6 +14,7 @@ use lucajegard\reziapi\ReziApi;
 
 use Craft;
 use craft\queue\BaseJob;
+use craft\elements\Entry;
 
 /**
  * ReziApiTask job
@@ -78,7 +79,7 @@ class ReziApiTask extends BaseJob
         $branchId = $this->criteria['branchId'];
         $mapping = $this->criteria['mapping'];
         $sectionId = $this->criteria['sectionId'];
-        $uniqueIdField = $this->criteria['uniqueIdField'];
+        $uniqueIdField = $this->criteria['uniqueIdField'];        
 
 
         while(!$allPropsFound){
@@ -116,7 +117,17 @@ class ReziApiTask extends BaseJob
             }
             $this->setProgress($queue, $key / count($propIds));
         }
-        file_put_contents( __DIR__ . '/fullresult.json' , json_encode($props) );
+
+        $allProps = Entry::find()
+        ->sectionId($sectionId)
+        ->status(null)
+        ->all();
+
+        foreach($allProps as $prop){
+            $uniqueId = (int)$prop[$uniqueIdField];
+            $prop->enabled = in_array($uniqueId, $propIds);
+            Craft::$app->elements->saveElement($prop);
+        }
     }
 
     // Protected Methods

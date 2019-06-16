@@ -84,19 +84,6 @@ class ReziApi extends Plugin
         parent::init();
         self::$plugin = $this;
 
-
-        require_once 'kint.phar';
-
-        // ReziApi::$plugin->reziApiService
-
-        // \Kint::dump( ReziApi::$plugin->reziApiService->searchReziProperties(3) );
-
-        // ReziApi::$plugin->reziApiService->updateCraftEntry(1,1,2);
-
-        // ReziApi::$plugin->reziApiService->catTest();
-
-
-
         // Register variable
         Event::on(CraftVariable::class, CraftVariable::EVENT_INIT, function(Event $event) {
             /** @var CraftVariable $variable */

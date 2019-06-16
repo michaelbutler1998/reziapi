@@ -82,9 +82,9 @@ class DefaultController extends Controller
     public function actionDeleteBranch()
     {
         $branchId = Craft::$app->getRequest()->getRequiredParam('branchId');
-        if( ReziApi::$plugin->reziApiService->deleteBranchModel($branchId) ){
+        if (ReziApi::$plugin->reziApiService->deleteBranchModel($branchId)) {
             Craft::$app->getSession()->setNotice(Craft::t('rezi-api', 'Branch deleted'));
-        }else{
+        } else {
             Craft::$app->getSession()->setNotice(Craft::t('rezi-api', 'Error deleting branch'));
         }
 
@@ -98,9 +98,9 @@ class DefaultController extends Controller
         $apiKey = Craft::$app->getRequest()->getRequiredParam('apiKey');
         $sectionId = Craft::$app->getRequest()->getRequiredParam('sectionId');
 
-        if( ReziApi::$plugin->reziApiService->createBranchModel($branchName, $apiKey, $sectionId) ){
+        if (ReziApi::$plugin->reziApiService->createBranchModel($branchName, $apiKey, $sectionId)) {
             Craft::$app->getSession()->setNotice(Craft::t('rezi-api', 'New branch added'));
-        }else{
+        } else {
             Craft::$app->getSession()->setNotice(Craft::t('rezi-api', 'Error saving branch'));
         }
 
@@ -112,14 +112,11 @@ class DefaultController extends Controller
         $branchId = Craft::$app->getRequest()->getRequiredParam('branchId');
         $mapping = Craft::$app->getRequest()->getRequiredParam('mapping');
         $uniqueIdField = Craft::$app->getRequest()->getRequiredParam('uniqueIdField');
-        // ReziApi::$plugin->reziApiService
-
-        // \Kint::dump($mapping);
 
         $updateBranchMapping = ReziApi::$plugin->reziApiService->updateBranchMapping($branchId, $mapping, $uniqueIdField);
-        if($updateBranchMapping){
+        if ($updateBranchMapping) {
             Craft::$app->getSession()->setNotice(Craft::t('rezi-api', 'Mapping updated'));
-        }else{
+        } else {
             Craft::$app->getSession()->setNotice(Craft::t('rezi-api', 'Error updating mapping'));
         }
         return $this->redirect('admin/rezi-api');
@@ -129,24 +126,12 @@ class DefaultController extends Controller
     {
         $branchId = Craft::$app->getRequest()->getRequiredParam('branchId');
         $branchName = Craft::$app->getRequest()->getRequiredParam('branchName');
-        $mapping = ReziApi::$plugin->reziApiService->getBranchMapping( $branchId );
+        $mapping = ReziApi::$plugin->reziApiService->getBranchMapping($branchId);
         $sectionId = Craft::$app->getRequest()->getRequiredParam('sectionId');
         $uniqueIdField = Craft::$app->getRequest()->getRequiredParam('uniqueIdField');
 
         $queue = Craft::$app->getQueue();
         
-        $allProps = Entry::find()
-        ->sectionId($sectionId)
-        ->status(null)
-        ->all();
-
-        // d($allProps[0]->status);
-        foreach($allProps as $prop){
-            // $prop->status = 'disabled';
-            $prop->enabled = false;
-            Craft::$app->elements->saveElement($prop);
-        }
-
         $jobId = $queue->push(new ReziApiTask([
             'criteria' => [
                 'sectionId' => $sectionId,
